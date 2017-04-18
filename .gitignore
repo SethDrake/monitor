@@ -1,0 +1,7 @@
+*.suo
+CodeDB
+ARM
+/Monitor.VC.db
+VisualGDBCache
+Debug
+Release
