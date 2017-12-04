@@ -53,6 +53,8 @@ bool doImpulseIndication = false;
 bool doAlert = false;
 bool doSleep = false;
 
+volatile bool inTickProcess = false;
+
 float battVoltage = 4.2f;
 float cpuTemp = 0.0f;
 
@@ -280,14 +282,18 @@ void TIM_Configuration()
 
 void EXTI_Configuration()
 {
-	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource2);
 	EXTI_InitTypeDef EXTI_InitStructure;
-	EXTI_ClearITPendingBit(EXTI_Line2);
-	EXTI_InitStructure.EXTI_Line = EXTI_Line2;
-	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
-	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-	EXTI_Init(&EXTI_InitStructure);
+	
+	//if (settingsManager.getBool(SETTINGS_BOOL_COUNT_ALLOWED))
+	{
+		GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource2);
+		EXTI_ClearITPendingBit(EXTI_Line2);
+		EXTI_InitStructure.EXTI_Line = EXTI_Line2;
+		EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+		EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
+		EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+		EXTI_Init(&EXTI_InitStructure);	
+	}
 	
 	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource3);
 	EXTI_ClearITPendingBit(EXTI_Line3);
@@ -366,6 +372,8 @@ void RTC_Configuration()
 		settingsManager.setBool(SETTINGS_BOOL_LED_ALLOWED, true);
 		settingsManager.setBool(SETTINGS_BOOL_SOUND_ALLOWED, false);
 		settingsManager.setBool(SETTINGS_BOOL_VIBRATION_ALLOWED, false);
+		settingsManager.setBool(SETTINGS_BOOL_HV_PUMP_ALLOWED, true);
+		settingsManager.setBool(SETTINGS_BOOL_COUNT_ALLOWED, true);
 		BKP_WriteBackupRegister(BKP_DR1, BCK_DONE);
 	}
 	else //warm boot
@@ -472,6 +480,10 @@ void processGeigerImpulse()
 	{
 		return;
 	}
+	if (inTickProcess)
+	{
+		return;	
+	}
 	if (systemMode == SLEEP) //awake from sleep - reinit peripheral
 	{
 		wakeUpFromSleep();
@@ -517,6 +529,10 @@ void processHVTestImpulse()
 	{
 		return;
 	}
+	if (inTickProcess)
+	{
+		return;	
+	}
 	switchHvPumpMode(false);
 	if (!isDisplayActive && !doDisplayOnline && !doAlert)
 	{ 
@@ -530,11 +546,13 @@ void processPeriodicTasks()
 	{
 		return;
 	}
+	inTickProcess = true;
 	if (systemMode == SLEEP) //awake from sleep - reinit peripheral
 	{
 		wakeUpFromSleep();
 	}
 	radiationCounter.TickOneSecond();
+
 	if (isHVPumpActive)
 	{
 		radiationCounter.IncPumpActiveDuration();
@@ -569,6 +587,7 @@ void processPeriodicTasks()
 			doSleep = true; //sleep if display inactive
 		}
 	}
+	inTickProcess = false;
 }
 
 
@@ -751,6 +770,10 @@ int main()
 #pragma region Switch external sensors and actuators
 void switchHvPumpMode(bool enable) 
 {
+	/*if (!settingsManager.getBool(SETTINGS_BOOL_HV_PUMP_ALLOWED))
+	{
+		enable = false; //disable HV pump	
+	}*/
 	if (enable)
 	{
 		TIM2->CCER |= TIM_CCER_CC2E;

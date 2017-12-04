@@ -26,6 +26,10 @@ ScreensManager::ScreensManager()
 	menuItems[15] = { SOUND_ON_ITEM, 30, 2, 5 };
 	menuItems[16] = { STATIC_ITEM, 60, 1, 6 };
 	menuItems[17] = { LED_ON_ITEM, 30, 2, 6 };
+	menuItems[18] = { STATIC_ITEM, 60, 1, 7 };
+	menuItems[19] = { HV_PUMP_ON_ITEM, 30, 2, 7 };
+	menuItems[20] = { STATIC_ITEM, 60, 1, 8 };
+	menuItems[21] = { COUNT_ON_ITEM, 30, 2, 8 };
 }
 
 ScreensManager::~ScreensManager()
@@ -134,7 +138,8 @@ void ScreensManager::drawMainScreen(void)
 	drawRadiationGraph(130, radColor, BLACK);
 	drawMinutlyRadiationGraph(40, WHITE, BLACK);
 	
-	drawFooter("   MENU   ", settingsManager->getBool(SETTINGS_BOOL_SOUND_ALLOWED) ? "  SND ON  " : "  SND OFF ", settingsManager->getBool(SETTINGS_BOOL_LED_ALLOWED) ? "  LED ON  " : "  LED OFF ");
+	drawFooter("   MENU   ", settingsManager->getBool(SETTINGS_BOOL_SOUND_ALLOWED) ? "  SND ON  " : "  SND OFF ", 
+							 settingsManager->getBool(SETTINGS_BOOL_LED_ALLOWED) ? "  LED ON  " : "  LED OFF ");
 }
 
 void ScreensManager::drawSettingMenu(void)
@@ -161,6 +166,10 @@ void ScreensManager::drawSettingMenu(void)
 	drawItem(15, settingsManager->getBool(SETTINGS_BOOL_SOUND_ALLOWED) ? "YES" : "NO ", 0);
 	drawItem(16, "LED:", 0);
 	drawItem(17, settingsManager->getBool(SETTINGS_BOOL_LED_ALLOWED) ? "YES" : "NO ", 0);
+	drawItem(18, "HVPMP:", 0);
+	drawItem(19, settingsManager->getBool(SETTINGS_BOOL_HV_PUMP_ALLOWED) ? "YES" : "NO ", 0);
+	drawItem(20, "COUNT:", 0);
+	drawItem(21, settingsManager->getBool(SETTINGS_BOOL_COUNT_ALLOWED) ? "YES" : "NO ", 0);
 	
 	//hide prev selection
 	uint8_t prevSelectedItemIdx = (actualMenuItemType == 255) ? LAST_ITEM : actualMenuItemType - 1;
@@ -307,7 +316,7 @@ void ScreensManager::updateKeys(bool key1Pressed, bool key2Pressed, bool key3Pre
 				if (key2Pressed)
 				{
 					t.day++;
-					if (t.month > maxDayInMonth)
+					if (t.day > maxDayInMonth)
 					{
 						t.day = 1;
 					}
@@ -427,6 +436,20 @@ void ScreensManager::updateKeys(bool key1Pressed, bool key2Pressed, bool key3Pre
 				if (key2Pressed || key3Pressed)
 				{
 					settingsManager->setBool(SETTINGS_BOOL_LED_ALLOWED, !settingsManager->getBool(SETTINGS_BOOL_LED_ALLOWED));
+				}
+			}
+			if (actualMenuItemType == HV_PUMP_ON_ITEM)
+			{
+				if (key2Pressed || key3Pressed)
+				{
+					settingsManager->setBool(SETTINGS_BOOL_HV_PUMP_ALLOWED, !settingsManager->getBool(SETTINGS_BOOL_HV_PUMP_ALLOWED));
+				}
+			}
+			if (actualMenuItemType == COUNT_ON_ITEM)
+			{
+				if (key2Pressed || key3Pressed)
+				{
+					settingsManager->setBool(SETTINGS_BOOL_COUNT_ALLOWED, !settingsManager->getBool(SETTINGS_BOOL_COUNT_ALLOWED));
 				}
 			}
 		}

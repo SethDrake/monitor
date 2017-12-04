@@ -28,7 +28,7 @@ void SettingsManager::readValuesFromBck()
 
 bool SettingsManager::getBool(uint8_t key)
 {
-	assert_param(IS_KEY_LEQUAL_15(key));
+	//assert_param(IS_KEY_LEQUAL_15(key));
 	return bool_settings[key];
 }
 
@@ -53,7 +53,7 @@ void SettingsManager::setBool(uint8_t key, bool value)
 
 uint16_t SettingsManager::getInt(uint8_t key)
 {
-	assert_param(IS_KEY_LEQUAL_4(key));
+	//assert_param(IS_KEY_LEQUAL_4(key));
 	return int_settings[key];
 }
 

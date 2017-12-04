@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="1.27" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="0.127" altunitdist="mm" altunit="mm"/>
+<grid distance="1.27" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="0.254" altunitdist="mm" altunit="mm"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
@@ -19300,7 +19300,7 @@ www.pulseeng.com</description>
 <part name="JP4" library="adafruit" deviceset="PINHD-1X1" device="-BIGPOGO" value="SBM+"/>
 <part name="JP6" library="adafruit" deviceset="PINHD-1X1" device="-BIGPOGO" value="SBM-"/>
 <part name="SUPPLY2" library="supply2" deviceset="V+" device=""/>
-<part name="JP7" library="adafruit" deviceset="PINHD-1X1" device="-BIGPOGO" value="+VBAT"/>
+<part name="JP7" library="adafruit" deviceset="PINHD-1X1" device="-BIGPOGO" value="+VBAT_SWITCH"/>
 <part name="JP8" library="adafruit" deviceset="PINHD-1X1" device="-BIGPOGO" value="GND"/>
 <part name="C15" library="resistor" deviceset="CPOL-EU" device="C/6032-28R" value="22uF"/>
 <part name="GND18" library="supply1" deviceset="GND" device=""/>
@@ -19369,7 +19369,6 @@ www.pulseeng.com</description>
 <part name="R6" library="resistor" deviceset="R-EU_" device="M1206" value="0.4"/>
 <part name="GND13" library="supply1" deviceset="GND" device=""/>
 <part name="R9" library="resistor" deviceset="R-EU_" device="M0805" value="2k"/>
-<part name="SUPPLY3" library="supply2" deviceset="V+" device="" value="V+"/>
 <part name="LED1" library="led" deviceset="LED" device="CHIP-LED0805" value="CHARGE"/>
 <part name="R7" library="resistor" deviceset="R-EU_" device="M0805" value="1k"/>
 <part name="C10" library="resistor" deviceset="C-EU" device="C0805" value="10uF"/>
@@ -19388,6 +19387,7 @@ www.pulseeng.com</description>
 <part name="+3V38" library="supply1" deviceset="+3V3" device=""/>
 <part name="R20" library="resistor" deviceset="R-EU_" device="M0805" value="150"/>
 <part name="R21" library="resistor" deviceset="R-EU_" device="M0805" value="270k"/>
+<part name="JP9" library="adafruit" deviceset="PINHD-1X1" device="-BIGPOGO" value="+V_BATERY"/>
 </parts>
 <sheets>
 <sheet>
@@ -19475,7 +19475,6 @@ www.pulseeng.com</description>
 <instance part="R6" gate="G$1" x="213.36" y="115.57" rot="R90"/>
 <instance part="GND13" gate="1" x="232.41" y="63.5"/>
 <instance part="R9" gate="G$1" x="238.76" y="76.2" rot="R270"/>
-<instance part="SUPPLY3" gate="1" x="189.23" y="63.5" rot="R180"/>
 <instance part="LED1" gate="G$1" x="193.04" y="104.14"/>
 <instance part="R7" gate="G$1" x="193.04" y="91.44" rot="R270"/>
 <instance part="C10" gate="G$1" x="228.6" y="73.66" rot="MR0"/>
@@ -19495,6 +19494,7 @@ www.pulseeng.com</description>
 <instance part="+3V38" gate="G$1" x="19.05" y="21.59" rot="MR0"/>
 <instance part="R20" gate="G$1" x="109.22" y="95.25"/>
 <instance part="R21" gate="G$1" x="-64.77" y="15.24"/>
+<instance part="JP9" gate="G$1" x="179.07" y="77.47" rot="R180"/>
 </instances>
 <busses>
 </busses>
@@ -19741,12 +19741,6 @@ www.pulseeng.com</description>
 <pinref part="R4" gate="G$1" pin="2"/>
 <pinref part="SUPPLY1" gate="1" pin="V+"/>
 <wire x1="177.8" y1="144.78" x2="177.8" y2="149.86" width="0.127" layer="91"/>
-</segment>
-<segment>
-<pinref part="SUPPLY3" gate="1" pin="V+"/>
-<wire x1="189.23" y1="66.04" x2="189.23" y2="77.47" width="0.127" layer="91"/>
-<pinref part="IC2" gate="G$1" pin="BAT"/>
-<wire x1="189.23" y1="77.47" x2="198.12" y2="77.47" width="0.127" layer="91"/>
 </segment>
 </net>
 <net name="HV_PULSE" class="0">
@@ -20341,6 +20335,13 @@ www.pulseeng.com</description>
 <pinref part="R20" gate="G$1" pin="2"/>
 <pinref part="SP1" gate="1" pin="1"/>
 <wire x1="114.3" y1="95.25" x2="118.11" y2="95.25" width="0.127" layer="91"/>
+</segment>
+</net>
+<net name="+V_BATTERY" class="0">
+<segment>
+<pinref part="IC2" gate="G$1" pin="BAT"/>
+<pinref part="JP9" gate="G$1" pin="1"/>
+<wire x1="198.12" y1="77.47" x2="181.61" y2="77.47" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>

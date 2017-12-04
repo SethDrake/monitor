@@ -7,9 +7,9 @@
 #include "ili9341.h"
 #include "settings.h"
 
-#define NUM_MENU_ITEMS 18
+#define NUM_MENU_ITEMS 22
 #define ITEM_HEIGHT 16
-#define LAST_ITEM 9
+#define LAST_ITEM 12
 
 typedef enum
 { 
@@ -31,6 +31,8 @@ typedef enum
 	VIBRATION_ON_ITEM,
 	SOUND_ON_ITEM,
 	LED_ON_ITEM,
+	HV_PUMP_ON_ITEM,
+	COUNT_ON_ITEM,
 	
 	STATIC_ITEM = 250
 } SETTINGS_MENU_ITEMS;
