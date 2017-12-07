@@ -53,8 +53,6 @@ bool doImpulseIndication = false;
 bool doAlert = false;
 bool doSleep = false;
 
-volatile bool inTickProcess = false;
-
 float battVoltage = 4.2f;
 float cpuTemp = 0.0f;
 
@@ -318,22 +316,22 @@ void NVIC_Configuration()
 	NVIC_InitTypeDef NVIC_InitStructure;
 	
 	NVIC_InitStructure.NVIC_IRQChannel = EXTI2_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 	NVIC_EnableIRQ(EXTI2_IRQn);
 	
 	NVIC_InitStructure.NVIC_IRQChannel = EXTI3_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 	NVIC_EnableIRQ(EXTI2_IRQn);
 	
 	NVIC_InitStructure.NVIC_IRQChannel = RTCAlarm_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 	NVIC_EnableIRQ(RTCAlarm_IRQn);
@@ -480,10 +478,6 @@ void processGeigerImpulse()
 	{
 		return;
 	}
-	if (inTickProcess)
-	{
-		return;	
-	}
 	if (systemMode == SLEEP) //awake from sleep - reinit peripheral
 	{
 		wakeUpFromSleep();
@@ -529,10 +523,6 @@ void processHVTestImpulse()
 	{
 		return;
 	}
-	if (inTickProcess)
-	{
-		return;	
-	}
 	switchHvPumpMode(false);
 	if (!isDisplayActive && !doDisplayOnline && !doAlert)
 	{ 
@@ -546,7 +536,6 @@ void processPeriodicTasks()
 	{
 		return;
 	}
-	inTickProcess = true;
 	if (systemMode == SLEEP) //awake from sleep - reinit peripheral
 	{
 		wakeUpFromSleep();
@@ -587,7 +576,6 @@ void processPeriodicTasks()
 			doSleep = true; //sleep if display inactive
 		}
 	}
-	inTickProcess = false;
 }
 
 
