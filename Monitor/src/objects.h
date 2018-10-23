@@ -41,13 +41,13 @@ typedef enum
 } RCC_MODE;
 
 extern ILI9341 display;
-extern SYSTEM_MODE systemMode;
-extern RCC_MODE rccMode;
+extern volatile SYSTEM_MODE systemMode;
+extern volatile RCC_MODE rccMode;
 
-extern bool isHVPumpActive;
+extern volatile bool isHVPumpActive;
 
-extern float battVoltage;
-extern float cpuTemp;
+extern volatile float battVoltage;
+extern volatile float cpuTemp;
 
 extern void processGeigerImpulse(void);
 extern void processHVTestImpulse(void);

@@ -30,9 +30,9 @@ public:
 	uint32_t GetMaxLevelTodayMkRh(void);
 	uint16_t GetLastSecondImpulseCount(void);
 	uint16_t GetCurrentSecondImpulseCount(void);
-	uint16_t* GetPerSecondCounts(void);
-	uint16_t* GetPerMinuteCounts(void);
-	uint16_t* GetPerHourCounts(void);
+	volatile uint16_t* GetPerSecondCounts(void);
+	volatile uint16_t* GetPerMinuteCounts(void);
+	volatile uint16_t* GetPerHourCounts(void);
 	uint32_t GetTotalSeconds(void);
 	uint32_t GetFullDose(void);
 	uint32_t GetFullDoseDays(void);
@@ -50,23 +50,23 @@ protected:
 	void CalculateCurrentLevelMkRh(void);
 
 private:
-	uint16_t counts[122];
-	uint16_t radPerMinutes[62];
-	uint16_t radPerHours[26];
-	uint16_t radPerDays[33];
-	uint32_t levelsPerYear[14];
-	uint32_t currentLevel;
-	uint32_t fullDose;
-	uint16_t fullDoseDays;
-	uint32_t sumCountsForInterval;
-	uint32_t maxLevel;
-	uint32_t maxLevelToday;
+	volatile uint16_t counts[122];
+	volatile uint16_t radPerMinutes[62];
+	volatile uint16_t radPerHours[26];
+	volatile uint16_t radPerDays[33];
+	volatile uint32_t levelsPerYear[14];
+	volatile uint32_t currentLevel;
+	volatile uint32_t fullDose;
+	volatile uint16_t fullDoseDays;
+	volatile uint32_t sumCountsForInterval;
+	volatile uint32_t maxLevel;
+	volatile uint32_t maxLevelToday;
 	time_s   time;
-	uint8_t  countTime;	
-	uint8_t  validateInterval;	
-	uint8_t  lastMinutePumpActiveSeconds;	
-	uint8_t  pumpActiveSeconds;	
-	uint32_t  uptime;	
+	volatile uint8_t  countTime;	
+	volatile uint8_t  validateInterval;	
+	volatile uint8_t  lastMinutePumpActiveSeconds;	
+	volatile uint8_t  pumpActiveSeconds;	
+	volatile uint32_t  uptime;	
 };
 
 #endif

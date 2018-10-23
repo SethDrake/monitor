@@ -43,20 +43,20 @@ public:
 	
 protected:
 	SPI_TypeDef* spi;
-	uint16_t spiPrescaler;
+	volatile uint16_t spiPrescaler;
 	GPIO_TypeDef* controlPort;
-	uint16_t rsPin;
-	uint16_t resetPin;
-	uint16_t csPin;
+	volatile uint16_t rsPin;
+	volatile uint16_t resetPin;
+	volatile uint16_t csPin;
 
-	uint8_t isDataSending;
-	uint8_t manualCsControl;
-	uint8_t disableDMA;
-	uint16_t color;
-	uint16_t bgColor;
+	volatile uint8_t isDataSending;
+	volatile uint8_t manualCsControl;
+	volatile uint8_t disableDMA;
+	volatile uint16_t color;
+	volatile uint16_t bgColor;
 	const unsigned char *font;
-	bool isLandscape;
-	bool isOk;
+	volatile bool isLandscape;
+	volatile bool isOk;
 
 private:
 	void setSPISpeed(uint16_t prescaler);

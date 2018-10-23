@@ -62,16 +62,16 @@ class ScreensManager {
 		void drawSettingMenu(void);
 		void drawStatisticsScreen(void);
 	private:
-		SCREEN screen;
-		uint8_t actualMenuItemType;
+		volatile SCREEN screen;
+		volatile uint8_t actualMenuItemType;
 		ILI9341* display;
 		RadiationCounter* radiationCounter;
 		SettingsManager* settingsManager;
 		void drawRadiationGraph(uint8_t y, uint16_t barColor, uint16_t bkgColor);
 		void drawMinutlyRadiationGraph(uint8_t y, uint16_t barColor, uint16_t bkgColor);
 		void drawRadiationBar(uint8_t y, uint16_t barColor, uint16_t bkgColor);
-	static uint8_t calcBattLevel(void);
-	static uint16_t calcRadColor(uint32_t radLevel);
+		static uint8_t calcBattLevel(void);
+		static uint16_t calcRadColor(uint32_t radLevel);
 		void drawItem(uint8_t itemNumber, const char* text, uint16_t val);
 		uint8_t getItemIndexByType(uint8_t itemType);
 		

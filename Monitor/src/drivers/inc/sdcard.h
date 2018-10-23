@@ -115,7 +115,7 @@ public:
 
 protected:
 	SPI_TypeDef* spi;
-	uint16_t spiPrescaler;
+	volatile uint16_t spiPrescaler;
 	GPIO_TypeDef* controlPort;
 	uint16_t csPin;
 

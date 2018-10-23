@@ -316,17 +316,17 @@ bool RadiationCounter::HasPulsesInLast5Seconds()
 	return (counts[1] + counts[2] + counts[3] + counts[4] + counts[5] > 0);
 }
 
-uint16_t* RadiationCounter::GetPerSecondCounts()
+volatile uint16_t* RadiationCounter::GetPerSecondCounts()
 {
 	return counts;
 }
 
-uint16_t* RadiationCounter::GetPerMinuteCounts()
+volatile uint16_t* RadiationCounter::GetPerMinuteCounts()
 {
 	return radPerMinutes;	
 }
 
-uint16_t* RadiationCounter::GetPerHourCounts()
+volatile uint16_t* RadiationCounter::GetPerHourCounts()
 {
 	return radPerDays;
 }

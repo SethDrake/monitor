@@ -19,11 +19,11 @@ public:
 	
 private:
 	GPIO_TypeDef* kbrdPort;
-	uint16_t kbrdPins[NUM_KEYS];
+	volatile uint16_t kbrdPins[NUM_KEYS];
 	bool prevKeysState[NUM_KEYS];
 	bool keysState[NUM_KEYS];
-	uint16_t reqInterval;
-	uint32_t lastTicksCount;
+	volatile uint16_t reqInterval;
+	volatile uint32_t lastTicksCount;
 };
 
 #endif

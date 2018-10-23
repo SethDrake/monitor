@@ -477,7 +477,7 @@ void ScreensManager::drawRadiationGraph(uint8_t y, uint16_t barColor, uint16_t b
 	uint8_t maxHeight = 70;
 	uint16_t buf[barWidth * maxHeight];
 	uint16_t t;
-	uint16_t* counts = radiationCounter->GetPerSecondCounts(); 
+	volatile uint16_t* counts = radiationCounter->GetPerSecondCounts(); 
 	uint16_t maxValue = *max_element(counts, counts + 120);
 	float coeff = (maxHeight - 10) * 1.0f / maxValue;
 	for (int8_t r = 119; r >= 0; r--)
@@ -513,7 +513,7 @@ void ScreensManager::drawMinutlyRadiationGraph(uint8_t y, uint16_t barColor, uin
 	uint8_t maxHeight = 90;
 	uint16_t buf[barWidth * maxHeight];
 	uint16_t t;
-	uint16_t* counts = radiationCounter->GetPerMinuteCounts(); 
+	volatile uint16_t* counts = radiationCounter->GetPerMinuteCounts(); 
 	uint16_t maxValue = *max_element(counts, counts + 60);
 	uint16_t fillColor;
 	uint8_t currentMinute = radiationCounter->GetTime()->minute;

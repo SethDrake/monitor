@@ -1,4 +1,5 @@
 
+#include <stdint.h>
 #include "stm32f10x.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_gpio.h"
@@ -33,35 +34,35 @@
 #define DEFAULT_PUMP_ACTIVATION_INTERVAL 1 //pump hv activate every second
 #define DEFAULT_PUMP_PULSE_DURATION 15
 
-RCC_MODE rccMode;
-SYSTEM_MODE systemMode = LOADING;
+volatile RCC_MODE rccMode;
+volatile SYSTEM_MODE systemMode = LOADING;
 ScreensManager screensManager;
 SettingsManager settingsManager;
-ADC_MODE adcMode = BATTERY_VOLTAGE;
+volatile ADC_MODE adcMode = BATTERY_VOLTAGE;
 ILI9341 display;
 Keyboard keyboard;
 SDCARD sdcard;
 
 RadiationCounter radiationCounter;
 
-bool isHVPumpActive = false;
-bool isDisplayActive = false;
-bool isSoundActive = false;
+volatile bool isHVPumpActive = false;
+volatile bool isDisplayActive = false;
+volatile bool isSoundActive = false;
 
-bool doDisplayOnline = false;
-bool doImpulseIndication = false;
-bool doAlert = false;
-bool doSleep = false;
+volatile bool doDisplayOnline = false;
+volatile bool doImpulseIndication = false;
+volatile bool doAlert = false;
+volatile bool doSleep = false;
 
-float battVoltage = 4.2f;
-float cpuTemp = 0.0f;
+volatile float battVoltage = 4.2f;
+volatile float cpuTemp = 0.0f;
 
-uint8_t hvPumpPulseDuration = DEFAULT_PUMP_PULSE_DURATION;
-uint8_t hvPumpActivationInterval = DEFAULT_PUMP_ACTIVATION_INTERVAL;
+volatile uint8_t hvPumpPulseDuration = DEFAULT_PUMP_PULSE_DURATION;
+volatile uint8_t hvPumpActivationInterval = DEFAULT_PUMP_ACTIVATION_INTERVAL;
 
-uint16_t inactiveSecondsCounter = 0;
-uint16_t pumpSecondsCounter = 0;
-uint16_t pumpDiCounter = 0;
+volatile uint16_t inactiveSecondsCounter = 0;
+volatile uint16_t pumpSecondsCounter = 0;
+volatile uint16_t pumpDiCounter = 0;
 
 extern void drawRadiationGraph(uint8_t y, uint16_t barColor, uint16_t bkgColor);
 extern void drawMinutlyRadiationGraph(uint8_t y, uint16_t barColor, uint16_t bkgColor);

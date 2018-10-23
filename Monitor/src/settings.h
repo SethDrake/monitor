@@ -36,8 +36,8 @@ public:
 protected:
 private:
 	void readValuesFromBck();
-	bool bool_settings[16];
-	uint16_t int_settings[5];
+	volatile bool bool_settings[16];
+	volatile uint16_t int_settings[5];
 };
 
 #endif

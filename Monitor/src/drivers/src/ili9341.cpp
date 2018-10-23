@@ -168,7 +168,7 @@ void ILI9341::sleep(short on){
 	DelayManager::DelayMs(100);
 }
 
-void ILI9341::clear(uint16_t color)
+void ILI9341::clear(const uint16_t color)
 {
 	if (isLandscape)
 	{
