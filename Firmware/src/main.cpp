@@ -1,4 +1,3 @@
-
 #include <stdint.h>
 #include "stm32f10x.h"
 #include "stm32f10x_rcc.h"
@@ -283,16 +282,13 @@ void EXTI_Configuration()
 {
 	EXTI_InitTypeDef EXTI_InitStructure;
 	
-	//if (settingsManager.getBool(SETTINGS_BOOL_COUNT_ALLOWED))
-	{
-		GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource2);
-		EXTI_ClearITPendingBit(EXTI_Line2);
-		EXTI_InitStructure.EXTI_Line = EXTI_Line2;
-		EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-		EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
-		EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-		EXTI_Init(&EXTI_InitStructure);	
-	}
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource2);
+	EXTI_ClearITPendingBit(EXTI_Line2);
+	EXTI_InitStructure.EXTI_Line = EXTI_Line2;
+	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
+	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStructure);	
 	
 	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource3);
 	EXTI_ClearITPendingBit(EXTI_Line3);
@@ -371,8 +367,6 @@ void RTC_Configuration()
 		settingsManager.setBool(SETTINGS_BOOL_LED_ALLOWED, true);
 		settingsManager.setBool(SETTINGS_BOOL_SOUND_ALLOWED, false);
 		settingsManager.setBool(SETTINGS_BOOL_VIBRATION_ALLOWED, false);
-		settingsManager.setBool(SETTINGS_BOOL_HV_PUMP_ALLOWED, true);
-		settingsManager.setBool(SETTINGS_BOOL_COUNT_ALLOWED, true);
 		BKP_WriteBackupRegister(BKP_DR1, BCK_DONE);
 	}
 	else //warm boot
@@ -443,6 +437,7 @@ void SleepMode()
 	switchIndicationLED(false);
 	switchSound(false);
 	systemMode = SLEEP;
+	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_SLEEP);
 	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 }
 
@@ -457,6 +452,7 @@ void StandbyMode()
 	switchSound(false);
 	RCC_RTCCLKCmd(DISABLE);
 	systemMode = STANDBY;
+	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_STANDBY);
 	PWR_EnterSTANDBYMode();
 }
 
@@ -470,6 +466,7 @@ void wakeUpFromSleep()
 	GPIO_Configuration();
 	switchIndicationLED(false);
 	systemMode = ACTIVE;
+	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_AWAKENED);
 } 
 
 
@@ -484,6 +481,7 @@ void processGeigerImpulse()
 		wakeUpFromSleep();
 	}
 	doImpulseIndication = true;
+	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_PULSE_DETECT);
 	if (!isDisplayActive)
 	{
 		if (settingsManager.getBool(SETTINGS_BOOL_LED_ALLOWED))
@@ -499,7 +497,9 @@ void processGeigerImpulse()
 	DelayManager::DelayUs(40);
 	if (radiationCounter.GetCurrentSecondImpulseCount() > PULSES_TO_DISCHARGE)
 	{
+		settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_FORCE_HV_PUMP);
 		switchHvPumpMode(true);
+		settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_PULSE_DETECT);
 	}
 	if (!isDisplayActive)
 	{
@@ -524,6 +524,7 @@ void processHVTestImpulse()
 	{
 		return;
 	}
+	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_HV_TEST);
 	switchHvPumpMode(false);
 	if (!isDisplayActive && !doDisplayOnline && !doAlert)
 	{ 
@@ -541,6 +542,7 @@ void processPeriodicTasks()
 	{
 		wakeUpFromSleep();
 	}
+	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_PERIODIC_TASK);
 	radiationCounter.TickOneSecond();
 
 	if (isHVPumpActive)
@@ -641,6 +643,8 @@ int main()
 	screensManager.init(&display, &radiationCounter, &settingsManager);
 
 	systemMode = ACTIVE;
+
+	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_LOADED);
 	
 	doDisplayOnline = true;
 	
@@ -759,10 +763,6 @@ int main()
 #pragma region Switch external sensors and actuators
 void switchHvPumpMode(bool enable) 
 {
-	/*if (!settingsManager.getBool(SETTINGS_BOOL_HV_PUMP_ALLOWED))
-	{
-		enable = false; //disable HV pump	
-	}*/
 	if (enable)
 	{
 		TIM2->CCER |= TIM_CCER_CC2E;

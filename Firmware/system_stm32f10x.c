@@ -102,6 +102,8 @@
           the System clock.
      If you are using different crystal you have to adapt those functions accordingly.
     */
+
+#define HSE_VALUE    ((uint32_t)24000000)
     
 #if defined (STM32F10X_LD_VL) || (defined STM32F10X_MD_VL) || (defined STM32F10X_HD_VL)
 /* #define SYSCLK_FREQ_HSE    HSE_VALUE */
@@ -1050,10 +1052,10 @@ static void SetSysClockTo72(void)
     RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLXTPRE_PREDIV1 | RCC_CFGR_PLLSRC_PREDIV1 | 
                             RCC_CFGR_PLLMULL9); 
 #else    
-    /*  PLL configuration: PLLCLK = HSE * 9 = 72 MHz */
+    /*  PLL configuration: PLLCLK = HSE * 3 = 72 MHz */
     RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_PLLSRC | RCC_CFGR_PLLXTPRE |
                                         RCC_CFGR_PLLMULL));
-    RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLSRC_HSE | RCC_CFGR_PLLMULL9);
+    RCC->CFGR |= (uint32_t)(RCC_CFGR_PLLSRC_HSE | RCC_CFGR_PLLMULL3);
 #endif /* STM32F10X_CL */
 
     /* Enable PLL */

@@ -1,4 +1,3 @@
-
 #include "stm32f10x_pwr.h"
 #include "stm32f10x_bkp.h"
 #include "settings.h"
@@ -34,7 +33,7 @@ bool SettingsManager::getBool(uint8_t key)
 
 void SettingsManager::setBool(uint8_t key, bool value)
 {
-	assert_param(IS_KEY_LEQUAL_15(key));	
+	assert_param(IS_KEY_LEQUAL_15(key)); //16 bool
 	if (bool_settings[key] != value)
 	{
 		bool_settings[key] = value;
@@ -59,7 +58,7 @@ uint16_t SettingsManager::getInt(uint8_t key)
 
 void SettingsManager::setInt(uint8_t key, uint16_t value)
 {
-	assert_param(IS_KEY_LEQUAL_4(key));
+	assert_param(IS_KEY_LEQUAL_4(key)); //5 int16
 	if (int_settings[key] != value) {
 		int_settings[key] = value;
 		BKP_WriteBackupRegister(BKP_DR3 + (key * 0x0004), int_settings[key]);

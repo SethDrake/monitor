@@ -40,6 +40,18 @@ typedef enum
 	HSI
 } RCC_MODE;
 
+typedef enum
+{ 
+	STATE_LOADED = 0,
+	STATE_SLEEP,
+	STATE_STANDBY,
+	STATE_AWAKENED,
+	STATE_PULSE_DETECT,
+	STATE_FORCE_HV_PUMP,
+	STATE_HV_TEST,
+	STATE_PERIODIC_TASK
+} LAST_STATE;
+
 extern ILI9341 display;
 extern volatile SYSTEM_MODE systemMode;
 extern volatile RCC_MODE rccMode;
