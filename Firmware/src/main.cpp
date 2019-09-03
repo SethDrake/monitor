@@ -465,11 +465,12 @@ void wakeUpFromSleep()
 	{
 		return;
 	}
+	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_AWAKENED);
 	RCC_Configuration();
 	GPIO_Configuration();
 	switchIndicationLED(false);
 	systemMode = ACTIVE;
-	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_AWAKENED);
+	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_LOADED);
 } 
 
 
