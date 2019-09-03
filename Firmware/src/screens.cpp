@@ -131,7 +131,7 @@ void ScreensManager::drawMainScreen(void)
 	}
 
 	//last state debug info
-	display->printf(150, 250, BLUE, BLACK, "LS: %03u", settingsManager->getInt(SETTINGS_INT_LAST_STATE));
+	display->printf(150, 250, BLUE, BLACK, "LS: %03u", lastStateBeforeBoot);
 
 	drawRadiationBar(221, radColor, BLACK);		
 	drawRadiationGraph(130, radColor, BLACK);

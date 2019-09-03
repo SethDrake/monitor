@@ -61,6 +61,8 @@ extern volatile bool isHVPumpActive;
 extern volatile float battVoltage;
 extern volatile float cpuTemp;
 
+extern volatile uint16_t lastStateBeforeBoot;
+
 extern void processGeigerImpulse(void);
 extern void processHVTestImpulse(void);
 extern void processPeriodicTasks(void);

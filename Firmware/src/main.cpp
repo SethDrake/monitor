@@ -63,6 +63,8 @@ volatile uint16_t inactiveSecondsCounter = 0;
 volatile uint16_t pumpSecondsCounter = 0;
 volatile uint16_t pumpDiCounter = 0;
 
+volatile uint16_t lastStateBeforeBoot;
+
 extern void drawRadiationGraph(uint8_t y, uint16_t barColor, uint16_t bkgColor);
 extern void drawMinutlyRadiationGraph(uint8_t y, uint16_t barColor, uint16_t bkgColor);
 extern void switchHvPumpMode(bool enable);
@@ -361,7 +363,7 @@ void RTC_Configuration()
 		RTC_SetPrescaler(32767); /* RTC period = RTCCLK/RTC_PR = (32.768 KHz)/(32767+1) */
 		RTC_WaitForLastTask();
 		
-		radiationCounter.SetTime({ 2017, 1, 29, 22, 56, 0 }); //default settings
+		radiationCounter.SetTime({ 2019, 9, 3, 15, 29, 0 }); //default settings
 		settingsManager.setInt(SETTINGS_INT_ALERT_THRESHOLD, DEFAULT_ALERT_THRESHOLD);
 		settingsManager.setInt(SETTINGS_INT_SLEEP_INTERVAL, DEFAULT_INACTIVE_PERIOD);
 		settingsManager.setBool(SETTINGS_BOOL_LED_ALLOWED, true);
@@ -373,6 +375,7 @@ void RTC_Configuration()
 	{
 		RTC_WaitForSynchro();
 		radiationCounter.SetTotalSeconds(RTC_GetCounter());
+		lastStateBeforeBoot = settingsManager.getInt(SETTINGS_INT_LAST_STATE);
 	}
 	RTC_WaitForLastTask();
 	RTC_ClearITPendingBit(RTC_IT_ALR);

@@ -9,3 +9,6 @@ Release
 /.vs/Monitor/v15/Browse.VC.db
 /Firmware/.vs/Firmware/v15/Browse.VC.db
 /Firmware/.vs/Firmware/v15/Browse.VC.opendb
+/.vs/Monitor/v15/Browse.VC.opendb
+/Monitor.sln.DotSettings.user
+/main_module.b##
