@@ -3,6 +3,7 @@
 #define __OBJECTS_H_
 
 #include "ili9341.h"
+#include "settings.h"
 
 template<class ForwardIt>
 	ForwardIt max_element(ForwardIt first, ForwardIt last)
@@ -49,10 +50,14 @@ typedef enum
 	STATE_PULSE_DETECT,
 	STATE_FORCE_HV_PUMP,
 	STATE_HV_TEST,
-	STATE_PERIODIC_TASK
+	STATE_PERIODIC_TASK,
+
+	STATE_WDG_RESET = 12,
+	STATE_HARD_FAULT = 13
 } LAST_STATE;
 
 extern ILI9341 display;
+extern SettingsManager settingsManager; 
 extern volatile SYSTEM_MODE systemMode;
 extern volatile RCC_MODE rccMode;
 

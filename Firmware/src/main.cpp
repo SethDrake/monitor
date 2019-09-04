@@ -13,6 +13,7 @@
 #include <stm32f10x_adc.h>
 #include <stm32f10x_dbgmcu.h>
 #include <stm32f10x_flash.h>
+#include <stm32f10x_iwdg.h>
 #include "objects.h"
 #include "screens.h"
 #include "ili9341.h"
@@ -94,8 +95,8 @@ void SetClock()
 	// Wait till HSE is ready
 	if (RCC_WaitForHSEStartUp() == SUCCESS)
 	{
-		FLASH_PrefetchBufferCmd(FLASH_PrefetchBuffer_Enable);
-		FLASH_SetLatency(FLASH_Latency_2);    
+		//FLASH_PrefetchBufferCmd(FLASH_PrefetchBuffer_Enable);
+		//FLASH_SetLatency(FLASH_Latency_2);    
 		RCC_HCLKConfig(RCC_SYSCLK_Div1);   
 		RCC_PCLK1Config(RCC_HCLK_Div2);
 		RCC_PCLK2Config(RCC_HCLK_Div1); 
@@ -136,6 +137,16 @@ void RCC_Configuration()
 	
 	//clock DMA1 controller
 	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
+}
+
+void WDG_Configuration()
+{
+	//Watchdog
+	IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
+	IWDG_SetPrescaler(IWDG_Prescaler_256);
+	IWDG_SetReload(0xEA);  //1.5 seconds
+	IWDG_ReloadCounter();
+	IWDG_Enable();
 }
 
 void GPIO_Configuration()
@@ -375,8 +386,16 @@ void RTC_Configuration()
 	{
 		RTC_WaitForSynchro();
 		radiationCounter.SetTotalSeconds(RTC_GetCounter());
+
+		if (RCC_GetFlagStatus(RCC_FLAG_IWDGRST))
+		{
+			settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_WDG_RESET);
+			RCC_ClearFlag();		
+		}
+
 		lastStateBeforeBoot = settingsManager.getInt(SETTINGS_INT_LAST_STATE);
 	}
+	
 	RTC_WaitForLastTask();
 	RTC_ClearITPendingBit(RTC_IT_ALR);
 	RTC_WaitForLastTask();
@@ -549,6 +568,8 @@ void processPeriodicTasks()
 	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_PERIODIC_TASK);
 	radiationCounter.TickOneSecond();
 
+	IWDG_ReloadCounter();
+
 	if (isHVPumpActive)
 	{
 		radiationCounter.IncPumpActiveDuration();
@@ -630,7 +651,8 @@ int main()
 	RTC_Configuration();
 	EXTI_Configuration();
 	NVIC_Configuration();
-	
+	WDG_Configuration();
+
 	switchHvPumpMode(true);
 	
 	/* setup display pins */
