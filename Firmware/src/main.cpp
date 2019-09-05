@@ -25,6 +25,8 @@
 #include "misc.h"
 #include "periph_config.h"
 
+#define SHUTDOWN_BATT_VOLTAGE 3.20f
+
 #define DEFAULT_INACTIVE_PERIOD 120 //120 seconds - period of inactivity before device going sleep
 #define REDRAW_INTERVAL 250 //250 ms
 #define DEFAULT_ALERT_THRESHOLD 100 //100 uR/h
@@ -54,7 +56,7 @@ volatile bool doImpulseIndication = false;
 volatile bool doAlert = false;
 volatile bool doSleep = false;
 
-volatile float battVoltage = 4.2f;
+volatile float battVoltage = 0.0f;
 volatile float cpuTemp = 0.0f;
 
 volatile uint8_t hvPumpPulseDuration = DEFAULT_PUMP_PULSE_DURATION;
@@ -63,8 +65,6 @@ volatile uint8_t hvPumpActivationInterval = DEFAULT_PUMP_ACTIVATION_INTERVAL;
 volatile uint16_t inactiveSecondsCounter = 0;
 volatile uint16_t pumpSecondsCounter = 0;
 volatile uint16_t pumpDiCounter = 0;
-
-volatile uint16_t lastStateBeforeBoot;
 
 extern void drawRadiationGraph(uint8_t y, uint16_t barColor, uint16_t bkgColor);
 extern void drawMinutlyRadiationGraph(uint8_t y, uint16_t barColor, uint16_t bkgColor);
@@ -82,7 +82,9 @@ extern void applyKeyboardActions();
 
 void Faults_Configuration()
 {
-	//DBGMCU_Config(DBGMCU_SLEEP | DBGMCU_STANDBY | DBGMCU_STOP, ENABLE); //Enable debug in powersafe modes
+#ifdef DEBUG
+	DBGMCU_Config(DBGMCU_SLEEP | DBGMCU_STANDBY | DBGMCU_STOP, ENABLE); //Enable debug in powersafe modes
+#endif
 	
 	SCB->CCR |= SCB_CCR_DIV_0_TRP;	
 }
@@ -337,7 +339,7 @@ void NVIC_Configuration()
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
-	NVIC_EnableIRQ(EXTI2_IRQn);
+	NVIC_EnableIRQ(EXTI3_IRQn);
 	
 	NVIC_InitStructure.NVIC_IRQChannel = RTCAlarm_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
@@ -384,16 +386,15 @@ void RTC_Configuration()
 	}
 	else //warm boot
 	{
-		RTC_WaitForSynchro();
-		radiationCounter.SetTotalSeconds(RTC_GetCounter());
-
+		
 		if (RCC_GetFlagStatus(RCC_FLAG_IWDGRST))
 		{
-			settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_WDG_RESET);
+			systemMode = (SYSTEM_MODE)settingsManager.getInt(SETTINGS_INT_SYSTEM_MODE);
 			RCC_ClearFlag();		
 		}
 
-		lastStateBeforeBoot = settingsManager.getInt(SETTINGS_INT_LAST_STATE);
+		RTC_WaitForSynchro();
+		radiationCounter.SetTotalSeconds(RTC_GetCounter());
 	}
 	
 	RTC_WaitForLastTask();
@@ -459,43 +460,52 @@ void SleepMode()
 	switchIndicationLED(false);
 	switchSound(false);
 	systemMode = SLEEP;
-	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_SLEEP);
+	settingsManager.setInt(SETTINGS_INT_SYSTEM_MODE, systemMode);
 	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
 }
 
-void StandbyMode()
+void ShutdownMode()
 {
-	if (systemMode == STANDBY)
+	if (systemMode == SHUTDOWN)
 	{
 		return;
 	}
+	display.resetIsDataSending();
 	SleepModePreparation();
 	switchIndicationLED(false);
 	switchSound(false);
-	RCC_RTCCLKCmd(DISABLE);
-	systemMode = STANDBY;
-	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_STANDBY);
-	PWR_EnterSTANDBYMode();
+	systemMode = SHUTDOWN;
+	settingsManager.setInt(SETTINGS_INT_SYSTEM_MODE, systemMode);
+	EXTI_ClearITPendingBit(EXTI_Line2 | EXTI_Line3 | EXTI_Line17);
+	NVIC_DisableIRQ(EXTI2_IRQn);
+	NVIC_DisableIRQ(EXTI3_IRQn);
+	RTC_ClearITPendingBit(RTC_IT_ALR);
+	RTC_ITConfig(RTC_IT_ALR, DISABLE);
+	__disable_irq();
+	EXTI_DeInit();
+	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
+	//PWR_EnterSTANDBYMode();
 }
 
 void wakeUpFromSleep()
 {
-	if (systemMode != SLEEP)
+	if (systemMode != SLEEP && systemMode != SHUTDOWN)
 	{
 		return;
 	}
-	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_AWAKENED);
 	RCC_Configuration();
 	GPIO_Configuration();
 	switchIndicationLED(false);
-	systemMode = ACTIVE;
-	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_LOADED);
+	if (systemMode == SLEEP) {
+		systemMode = ACTIVE;
+	}
+	settingsManager.setInt(SETTINGS_INT_SYSTEM_MODE, systemMode);
 } 
 
 
 void processGeigerImpulse()
 { //tick on every radiation impulse
-	if (systemMode == LOADING)
+	if(systemMode == LOADING || systemMode == SHUTDOWN)
 	{
 		return;
 	}
@@ -504,7 +514,6 @@ void processGeigerImpulse()
 		wakeUpFromSleep();
 	}
 	doImpulseIndication = true;
-	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_PULSE_DETECT);
 	if (!isDisplayActive)
 	{
 		if (settingsManager.getBool(SETTINGS_BOOL_LED_ALLOWED))
@@ -517,12 +526,10 @@ void processGeigerImpulse()
 		}
 	}
 	radiationCounter.TickImpulse();
-	DelayManager::DelayUs(40);
+	DelayManager::DelayUs(50);
 	if (radiationCounter.GetCurrentSecondImpulseCount() > PULSES_TO_DISCHARGE)
 	{
-		settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_FORCE_HV_PUMP);
 		switchHvPumpMode(true);
-		settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_PULSE_DETECT);
 	}
 	if (!isDisplayActive)
 	{
@@ -543,11 +550,10 @@ void processGeigerImpulse()
 
 void processHVTestImpulse()
 { //tick on HV is enough
-	if (systemMode == LOADING)
+	if(systemMode == LOADING || systemMode == SHUTDOWN)
 	{
 		return;
 	}
-	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_HV_TEST);
 	switchHvPumpMode(false);
 	if (!isDisplayActive && !doDisplayOnline && !doAlert)
 	{ 
@@ -557,7 +563,7 @@ void processHVTestImpulse()
 
 void processPeriodicTasks()
 { //tick 1 second
-	if (systemMode == LOADING)
+	if(systemMode == LOADING || systemMode == SHUTDOWN)
 	{
 		return;
 	}
@@ -565,7 +571,6 @@ void processPeriodicTasks()
 	{
 		wakeUpFromSleep();
 	}
-	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_PERIODIC_TASK);
 	radiationCounter.TickOneSecond();
 
 	IWDG_ReloadCounter();
@@ -645,7 +650,8 @@ int main()
 	GPIO_Configuration();
 	TIM_Configuration();
 	//USART_Configuration();
-	//I2C_Configuration();
+	//I2C_Configuration
+
 	SPI_Configuration();
 	ADC_Configuration();
 	RTC_Configuration();
@@ -669,18 +675,17 @@ int main()
 	screensManager.init(&display, &radiationCounter, &settingsManager);
 
 	systemMode = ACTIVE;
-
-	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_LOADED);
 	
 	doDisplayOnline = true;
 	
 	uint16_t indCounter = 0;
-	uint16_t alertCounter = 0;
+	uint32_t alertCounter = 0;
 	
 	uint32_t lastTickCount = DelayManager::GetSysTickCount();
 	
 	doImpulseIndication = true;
-	
+
+	startBattVoltageMeasure();
 	startTemperatureMeasure();
 	
 	while (true)
@@ -700,13 +705,41 @@ int main()
 			doDisplayOnline = false;
 		}
 		
-		/*if ((battVoltage < 3.20f) && (battVoltage > 1.00f)) //deep discharge (if battery detected)
-		{
-			switchDisplay(false); //switch off display
-			switchHvPumpMode(false);
-			switchIndicationLED(false);
-			switchSound(false);
-			StandbyMode(); //stand by	
+		/*if (DelayManager::GetSysTickCount() > 3000) {
+			if ((systemMode != SHUTDOWN) && (battVoltage < SHUTDOWN_BATT_VOLTAGE) && (battVoltage > 1.00f)) //deep discharge (if battery detected)
+			{
+				switchDisplay(false);  //switch off display
+				switchHvPumpMode(false);
+
+				switchIndicationLED(true);
+				switchSound(true);
+				DelayManager::DelayMs(500);
+
+				switchIndicationLED(false);
+				switchSound(false);
+				DelayManager::DelayMs(500);
+
+				switchIndicationLED(true);
+				switchSound(true);
+				DelayManager::DelayMs(500);
+
+				switchIndicationLED(false);
+				switchSound(false);
+				DelayManager::DelayMs(500);
+
+				switchIndicationLED(true);
+				switchSound(true);
+				DelayManager::DelayMs(500);
+
+				switchIndicationLED(false);
+				switchSound(false);
+
+				ShutdownMode();  //stand by
+			}
+			else if ((systemMode == SHUTDOWN) && (battVoltage >= SHUTDOWN_BATT_VOLTAGE))
+			{
+				systemMode = ACTIVE;
+			}
 		}*/
 		
 		if (doAlert)
@@ -716,7 +749,7 @@ int main()
 				switchSound(true);	
 			}
 			alertCounter++;
-			if (alertCounter > ALERT_DURATION * 100)
+			if (alertCounter > ALERT_DURATION * 150)
 			{
 				switchSound(false);
 				alertCounter = 0;
@@ -900,6 +933,42 @@ void startTemperatureMeasure()
 	ADC_TempSensorVrefintCmd(ENABLE);
 	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);
 	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+}
+
+time_s timeFromSeconds(uint32_t val)
+{
+	uint32_t ace;
+	uint8_t b;
+	uint8_t d;
+	uint8_t m;
+	time_s time;
+
+	ace = (val / 86400) + 32044 + JD0;
+	b = (4*ace + 3) / 146097;
+	ace = ace - ((146097*b) / 4);
+	d = (4*ace + 3) / 1461;
+	ace = ace - ((1461*d) / 4);
+	m = (5*ace + 2) / 153;
+	time.day = ace - ((153*m + 2) / 5) + 1;
+	time.month = m + 3 - (12*(m / 10));
+	time.year = 100*b + d - 4800 + (m / 10);
+	time.hour = (val / 3600) % 24;
+	time.minute = (val / 60) % 60;
+	time.second = (val % 60);
+
+	return time;
+}
+
+short_time_s shortTimeFromSeconds(uint32_t val)
+{
+	short_time_s time;
+
+	time.days = (val / 86400);
+	time.hour = (val / 3600) % 24;
+	time.minute = (val / 60) % 60;
+	time.second = (val % 60);
+
+	return time;
 }
 
 #pragma endregion

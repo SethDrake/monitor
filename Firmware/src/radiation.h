@@ -4,18 +4,8 @@
 #define __RADIATION_H_
 
 #include "stm32f10x.h"
+#include "objects.h"
 
-typedef struct
-{
-	uint16_t year;
-	int8_t month;
-	int8_t day;
-	int8_t hour;
-	int8_t minute;
-	int8_t second;
-} time_s;
-
-#define JD0 2451911 // days 01 Jan 2001
 #define impulse_threshold 10
 
 class RadiationCounter {
@@ -34,6 +24,7 @@ public:
 	volatile uint16_t* GetPerMinuteCounts(void);
 	volatile uint16_t* GetPerHourCounts(void);
 	uint32_t GetTotalSeconds(void);
+	void ClearFullDose(void);
 	uint32_t GetFullDose(void);
 	uint32_t GetFullDoseDays(void);
 	void SetTotalSeconds(uint32_t val);
@@ -44,7 +35,8 @@ public:
 	uint8_t GetPumpActivDurationPerMinute(void);
 	bool HasPulsesInLast5Seconds(void);
 	uint8_t GetDaysInMonth(uint8_t month, uint16_t year);
-	uint32_t GetUptimeMinutes(void);
+	uint32_t GetUptime(void);
+	void ClearUptime(void);
 	
 protected:
 	void CalculateCurrentLevelMkRh(void);

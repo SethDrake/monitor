@@ -5,6 +5,26 @@
 #include "ili9341.h"
 #include "settings.h"
 
+#define JD0 2451911 // days 01 Jan 2001
+
+typedef struct
+{
+	uint16_t year;
+	int8_t month;
+	int8_t day;
+	int8_t hour;
+	int8_t minute;
+	int8_t second;
+} time_s;
+
+typedef struct
+{
+	int8_t days;
+	int8_t hour;
+	int8_t minute;
+	int8_t second;
+} short_time_s;
+
 template<class ForwardIt>
 	ForwardIt max_element(ForwardIt first, ForwardIt last)
 	{
@@ -21,12 +41,13 @@ template<class ForwardIt>
 		return largest;
 	}
 
+
 typedef enum
 { 
 	LOADING = 0,
 	ACTIVE,
 	SLEEP,
-	STANDBY
+	SHUTDOWN
 } SYSTEM_MODE;
 
 typedef enum
@@ -41,20 +62,6 @@ typedef enum
 	HSI
 } RCC_MODE;
 
-typedef enum
-{ 
-	STATE_LOADED = 0,
-	STATE_SLEEP,
-	STATE_STANDBY,
-	STATE_AWAKENED,
-	STATE_PULSE_DETECT,
-	STATE_FORCE_HV_PUMP,
-	STATE_HV_TEST,
-	STATE_PERIODIC_TASK,
-
-	STATE_WDG_RESET = 12,
-	STATE_HARD_FAULT = 13
-} LAST_STATE;
 
 extern ILI9341 display;
 extern SettingsManager settingsManager; 
@@ -66,11 +73,11 @@ extern volatile bool isHVPumpActive;
 extern volatile float battVoltage;
 extern volatile float cpuTemp;
 
-extern volatile uint16_t lastStateBeforeBoot;
-
 extern void processGeigerImpulse(void);
 extern void processHVTestImpulse(void);
 extern void processPeriodicTasks(void);
 extern void readADCValue(void);
+extern time_s timeFromSeconds(uint32_t val);
+extern short_time_s shortTimeFromSeconds(uint32_t val);
 
 #endif //__OBJECTS_H_

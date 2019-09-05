@@ -130,9 +130,6 @@ void ScreensManager::drawMainScreen(void)
 		display->printf(5, 250, radColor, BLACK, "RAD: %3u.%02u mR/h        ", intPart, floatPart);	
 	}
 
-	//last state debug info
-	display->printf(150, 250, BLUE, BLACK, "LS: %03u", lastStateBeforeBoot);
-
 	drawRadiationBar(221, radColor, BLACK);		
 	drawRadiationGraph(130, radColor, BLACK);
 	drawMinutlyRadiationGraph(40, WHITE, BLACK);
@@ -230,8 +227,24 @@ void ScreensManager::drawItem(uint8_t itemNumber, const char* text, uint16_t val
 void ScreensManager::drawStatisticsScreen(void)
 {
 	display->printf(80, 292, WHITE, BLACK, "STATISTICS");
+
+	short_time_s shortTime = shortTimeFromSeconds(radiationCounter->GetUptime());
+	display->printf(5, 270, WHITE, BLACK, "UPTIME: %ud %uh %um %usec.", shortTime.days, shortTime.hour, shortTime.minute, shortTime.second);
+
+	uint32_t sumDose = radiationCounter->GetFullDose();
+	if (sumDose < 1000)
+	{
+		display->printf(5, 254, WHITE, BLACK, "SUM DOSE:%3u \x83R   ", sumDose);	
+	}
+	else
+	{
+		float sumDoseMRh = sumDose * 1.0f / 1000;
+		uint8_t intPart = sumDoseMRh;
+		uint16_t floatPart = ((sumDoseMRh - intPart) * 1000);
+		display->printf(5, 254, WHITE, BLACK, "SUM DOSE:%3u.%02u mR   ", intPart, floatPart);	
+	}
 	
-	drawFooter("   MAIN   ", "    +     ", "  CLEAR   ");
+	drawFooter("   MAIN   ", "          ", "  CLEAR   ");
 }
 
 void ScreensManager::updateKeys(bool key1Pressed, bool key2Pressed, bool key3Pressed)
@@ -441,6 +454,11 @@ void ScreensManager::updateKeys(bool key1Pressed, bool key2Pressed, bool key3Pre
 		{
 			switchToScreen(MAIN);
 			return;
+		}
+		else if (key3Pressed)
+		{
+			radiationCounter->ClearUptime();
+			radiationCounter->ClearFullDose();
 		}
 	}
 	

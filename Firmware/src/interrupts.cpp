@@ -181,8 +181,6 @@ void hard_fault_handler(unsigned int * hardfault_args)
 	stacked_pc = ((unsigned long) hardfault_args[6]);
 	stacked_psr = ((unsigned long) hardfault_args[7]);
 
-	settingsManager.setInt(SETTINGS_INT_LAST_STATE, STATE_HARD_FAULT);
-
 	custom_fault_handler("HARD FAULT DETECTED --- SYSTEM STOPPED");
 	if (display.isReady())
 	{

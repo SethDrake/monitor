@@ -2,6 +2,7 @@
 #include "stm32f10x_pwr.h"
 #include "stm32f10x_bkp.h"
 #include "stm32f10x_rtc.h"
+#include "objects.h"
 #include "radiation.h"
 
 static const uint8_t days_in_month[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
@@ -53,7 +54,9 @@ void RadiationCounter::TickOneSecond()
 		counts[i] = counts[i - 1];
 	}
 	counts[0] = 0;
-	//time.second++;
+
+	uptime++;
+
 	if (validateInterval > 0)
 	{
 		validateInterval--;
@@ -67,11 +70,8 @@ void RadiationCounter::TickOneSecond()
 
 	}
 
-	
-	//if (time.second == 60) // one minute elapsed
 	if (time.second == 0) // one minute elapsed
 	{
-		//time.second = 0;
 		radPerMinutes[time.minute] = sumCountsForInterval / 60;
 		sumCountsForInterval = 0;
 		
@@ -91,16 +91,12 @@ void RadiationCounter::TickOneSecond()
 			}
 		}
 		
-		//time.minute++;
 		lastMinutePumpActiveSeconds = pumpActiveSeconds;
 		pumpActiveSeconds = 0;
-		uptime++;
 	}
 	
-	//if (time.minute == 60) // one hour elapsed
 	if (time.minute == 0) // one hour elapsed
 	{
-		//time.minute = 0;
 		for (uint8_t i = 0; i < 60; i++) {
 			radPerHours[time.hour] += radPerMinutes[i];
 		}
@@ -109,37 +105,20 @@ void RadiationCounter::TickOneSecond()
 		fullDose += radPerHours[time.hour];
 		BKP_WriteBackupRegister(BKP_DR8, (uint16_t)(fullDose >> 16));
 		BKP_WriteBackupRegister(BKP_DR9, (uint16_t)(fullDose & 0xFFFF));
-		//time.hour++;
 	}
 	
-	//if (time.hour == 24) // one day elapsed
 	if (time.hour == 0) // one day elapsed
 	{
-		//time.hour = 0;
 		for (uint8_t i = 31; i > 0; i--)
 		{
 			radPerDays[i] = radPerDays[i - 1]; // смещаем массив
 		}
 		radPerDays[0] = 0;
-		//time.day++;
+
 		fullDoseDays++;
 		BKP_WriteBackupRegister(BKP_DR10, fullDoseDays);
-		
-		/*uint8_t daysInCurrentMonth = this->GetDaysInMonth(time.month, time.year);
-		if (time.day > daysInCurrentMonth)
-		{
-			time.month++;
-			time.day = 1;
-			
-			if (time.month > 12)
-			{
-				time.year++;
-				time.month = 1;
-			}
-		}*/
 	}
 	
-	//this->SetTime(time);
 	this->CalculateCurrentLevelMkRh();
 }
 
@@ -267,23 +246,7 @@ uint32_t RadiationCounter::GetTotalSeconds()
 
 void RadiationCounter::SetTotalSeconds(uint32_t val)
 {
-	uint32_t ace;
-	uint8_t b;
-	uint8_t d;
-	uint8_t m;
-
-	ace = (val / 86400) + 32044 + JD0;
-	b = (4*ace + 3) / 146097;
-	ace = ace - ((146097*b) / 4);
-	d = (4*ace + 3) / 1461;
-	ace = ace - ((1461*d) / 4);
-	m = (5*ace + 2) / 153;
-	time.day = ace - ((153*m + 2) / 5) + 1;
-	time.month = m + 3 - (12*(m / 10));
-	time.year = 100*b + d - 4800 + (m / 10);
-	time.hour = (val / 3600) % 24;
-	time.minute = (val / 60) % 60;
-	time.second = (val % 60);
+	time = timeFromSeconds(val);
 }
 
 time_s* RadiationCounter::GetTime(void)
@@ -344,6 +307,16 @@ uint8_t RadiationCounter::GetDaysInMonth(uint8_t month, uint16_t year)
 	return daysInMonth;
 }
 
+
+void RadiationCounter::ClearFullDose()
+{
+	this->fullDose = 0;
+	this->fullDoseDays = 0;
+	BKP_WriteBackupRegister(BKP_DR8, 0);
+	BKP_WriteBackupRegister(BKP_DR9, 0);
+	BKP_WriteBackupRegister(BKP_DR10, fullDoseDays);
+}
+
 uint32_t RadiationCounter::GetFullDose()
 {
 	return this->fullDose;
@@ -359,7 +332,12 @@ uint8_t RadiationCounter::GetPumpActivDurationPerMinute()
 	return this->lastMinutePumpActiveSeconds;
 }
 
-uint32_t RadiationCounter::GetUptimeMinutes()
+uint32_t RadiationCounter::GetUptime()
 {
 	return this->uptime;
+}
+
+void RadiationCounter::ClearUptime()
+{
+	this->uptime = 0;
 }
