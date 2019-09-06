@@ -83,9 +83,8 @@ extern void applyKeyboardActions();
 void Faults_Configuration()
 {
 #ifdef DEBUG
-	DBGMCU_Config(DBGMCU_SLEEP | DBGMCU_STANDBY | DBGMCU_STOP, ENABLE); //Enable debug in powersafe modes
+	DBGMCU_Config(DBGMCU_SLEEP | DBGMCU_STANDBY | DBGMCU_STOP | DBGMCU_CR_DBG_IWDG_STOP, ENABLE);  //Enable debug in powersafe modes
 #endif
-	DBGMCU_Config(DBGMCU_CR_DBG_IWDG_STOP, ENABLE);    // Disable IWDG if core is halted
 	SCB->CCR |= SCB_CCR_DIV_0_TRP;	
 }
 
@@ -146,7 +145,7 @@ void WDG_Configuration()
 	//Watchdog
 	IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
 	IWDG_SetPrescaler(IWDG_Prescaler_256);
-	IWDG_SetReload(0xEA);  //1.5 seconds
+	IWDG_SetReload(0x061A);  //10 seconds
 	IWDG_ReloadCounter();
 	IWDG_Enable();
 }
