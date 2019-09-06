@@ -25,7 +25,7 @@
 #include "misc.h"
 #include "periph_config.h"
 
-#define SHUTDOWN_BATT_VOLTAGE 3.20f
+#define SHUTDOWN_BATT_VOLTAGE 3.1f
 
 #define DEFAULT_INACTIVE_PERIOD 120 //120 seconds - period of inactivity before device going sleep
 #define REDRAW_INTERVAL 250 //250 ms
@@ -85,7 +85,7 @@ void Faults_Configuration()
 #ifdef DEBUG
 	DBGMCU_Config(DBGMCU_SLEEP | DBGMCU_STANDBY | DBGMCU_STOP, ENABLE); //Enable debug in powersafe modes
 #endif
-	
+	DBGMCU_Config(DBGMCU_CR_DBG_IWDG_STOP, ENABLE);    // Disable IWDG if core is halted
 	SCB->CCR |= SCB_CCR_DIV_0_TRP;	
 }
 
@@ -386,13 +386,6 @@ void RTC_Configuration()
 	}
 	else //warm boot
 	{
-		
-		if (RCC_GetFlagStatus(RCC_FLAG_IWDGRST))
-		{
-			systemMode = (SYSTEM_MODE)settingsManager.getInt(SETTINGS_INT_SYSTEM_MODE);
-			RCC_ClearFlag();		
-		}
-
 		RTC_WaitForSynchro();
 		radiationCounter.SetTotalSeconds(RTC_GetCounter());
 	}
@@ -457,7 +450,6 @@ void SleepMode()
 	}
 	display.resetIsDataSending();
 	SleepModePreparation();
-	switchIndicationLED(false);
 	switchSound(false);
 	systemMode = SLEEP;
 	settingsManager.setInt(SETTINGS_INT_SYSTEM_MODE, systemMode);
@@ -483,7 +475,7 @@ void ShutdownMode()
 	RTC_ITConfig(RTC_IT_ALR, DISABLE);
 	__disable_irq();
 	EXTI_DeInit();
-	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFI);
+	PWR_EnterSTOPMode(PWR_Regulator_LowPower, PWR_STOPEntry_WFE);
 	//PWR_EnterSTANDBYMode();
 }
 
@@ -526,7 +518,7 @@ void processGeigerImpulse()
 		}
 	}
 	radiationCounter.TickImpulse();
-	DelayManager::DelayUs(50);
+	DelayManager::DelayUs(40);
 	if (radiationCounter.GetCurrentSecondImpulseCount() > PULSES_TO_DISCHARGE)
 	{
 		switchHvPumpMode(true);
@@ -675,18 +667,23 @@ int main()
 	screensManager.init(&display, &radiationCounter, &settingsManager);
 
 	systemMode = ACTIVE;
-	
-	doDisplayOnline = true;
+
+	if (RCC_GetFlagStatus(RCC_FLAG_IWDGRST))
+	{
+		systemMode = (SYSTEM_MODE)settingsManager.getInt(SETTINGS_INT_SYSTEM_MODE);
+		RCC_ClearFlag();		
+	}
+	else
+	{
+		startTemperatureMeasure();
+		doDisplayOnline = true;
+		doImpulseIndication = true;
+	}
 	
 	uint16_t indCounter = 0;
 	uint32_t alertCounter = 0;
 	
 	uint32_t lastTickCount = DelayManager::GetSysTickCount();
-	
-	doImpulseIndication = true;
-
-	startBattVoltageMeasure();
-	startTemperatureMeasure();
 	
 	while (true)
 	{
@@ -705,10 +702,10 @@ int main()
 			doDisplayOnline = false;
 		}
 		
-		/*if (DelayManager::GetSysTickCount() > 3000) {
+		if (lastTickCount > 3000) {
 			if ((systemMode != SHUTDOWN) && (battVoltage < SHUTDOWN_BATT_VOLTAGE) && (battVoltage > 1.00f)) //deep discharge (if battery detected)
 			{
-				switchDisplay(false);  //switch off display
+				switchDisplay(false);   //switch off display
 				switchHvPumpMode(false);
 
 				switchIndicationLED(true);
@@ -734,14 +731,10 @@ int main()
 				switchIndicationLED(false);
 				switchSound(false);
 
-				ShutdownMode();  //stand by
+				ShutdownMode();
 			}
-			else if ((systemMode == SHUTDOWN) && (battVoltage >= SHUTDOWN_BATT_VOLTAGE))
-			{
-				systemMode = ACTIVE;
-			}
-		}*/
-		
+		}
+				
 		if (doAlert)
 		{
 			if (alertCounter == 0)
@@ -777,7 +770,7 @@ int main()
 					}
 				}
 				indCounter++;
-				if (indCounter > 500)
+				if (indCounter > 450)
 				{
 					switchIndicationLED(false);
 					if (!doAlert)
@@ -809,12 +802,16 @@ int main()
 					switchDisplay(false); //switch off display
 					doSleep = true; //sleep
 				}
-
-				if (radiationCounter.GetTime()->second == 30)
-				{
-					startBattVoltageMeasure();
-				}
 			}
+		}
+
+		if (radiationCounter.GetTime()->second == 10)
+		{
+			startBattVoltageMeasure();
+		}
+		else if (radiationCounter.GetTime()->second == 40)
+		{
+			startTemperatureMeasure();
 		}
 	}
 }
@@ -920,7 +917,7 @@ void startBattVoltageMeasure()
 {
 	adcMode = BATTERY_VOLTAGE;
 	ADC_Cmd(ADC1, ENABLE);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 1, ADC_SampleTime_239Cycles5);
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 1, ADC_SampleTime_41Cycles5);
 	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);
 	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 }
