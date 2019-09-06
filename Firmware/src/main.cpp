@@ -25,7 +25,7 @@
 #include "misc.h"
 #include "periph_config.h"
 
-#define SHUTDOWN_BATT_VOLTAGE 1.8f
+#define SHUTDOWN_BATT_VOLTAGE 3.0f
 
 #define DEFAULT_INACTIVE_PERIOD 120 //120 seconds - period of inactivity before device going sleep
 #define REDRAW_INTERVAL 250 //250 ms
@@ -916,7 +916,7 @@ void startBattVoltageMeasure()
 {
 	adcMode = BATTERY_VOLTAGE;
 	ADC_Cmd(ADC1, ENABLE);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 1, ADC_SampleTime_7Cycles5);
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 1, ADC_SampleTime_1Cycles5);
 	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);
 	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 }
