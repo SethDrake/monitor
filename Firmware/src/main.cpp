@@ -900,14 +900,14 @@ void readADCValue()
 	ADC_ClearFlag(ADC1, ADC_FLAG_EOC);
 	if (adcMode == BATTERY_VOLTAGE)
 	{
-		battVoltage = 2 * (val * 3.06f) / 4095;	
+		battVoltage = 2.09719 * (val * 3.2f) / 4096;	
 	}
 	else if (adcMode == TEMPERATURE)
 	{
 		ADC_TempSensorVrefintCmd(DISABLE);
 		float v25 = 1.43f;
 		float avgSlope = 4.3f;
-		cpuTemp = ((v25 - ((val * 3.3f) / 4095)) / avgSlope) + 25;
+		cpuTemp = ((v25 - ((val * 3.3f) / 4096)) / avgSlope) + 25;
 	}
 	ADC_Cmd(ADC1, DISABLE);
 }
