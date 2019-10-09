@@ -56,6 +56,7 @@ volatile bool doImpulseIndication = false;
 volatile bool doAlert = false;
 volatile bool doSleep = false;
 
+volatile uint16_t VREFINT = 0;
 volatile float battVoltage = 0.0f;
 volatile float cpuTemp = 0.0f;
 
@@ -75,6 +76,7 @@ extern void switchDisplay(bool on);
 extern void switchIndicationLED(bool on);
 extern void switchSound(bool on);
 extern void switchVibration(bool on);
+extern void startVrefIntMeasure();
 extern void startBattVoltageMeasure();
 extern void startTemperatureMeasure();
 
@@ -683,6 +685,8 @@ int main()
 	uint32_t alertCounter = 0;
 	
 	uint32_t lastTickCount = DelayManager::GetSysTickCount();
+
+	startVrefIntMeasure();
 	
 	while (true)
 	{
@@ -697,7 +701,7 @@ int main()
 			switchIndicationLED(false);
 			switchDisplay(true);		
 			display.clear(BLACK);
-			startBattVoltageMeasure();
+			startVrefIntMeasure();
 			doDisplayOnline = false;
 		}
 		
@@ -806,7 +810,7 @@ int main()
 
 		if (radiationCounter.GetTime()->second == 10)
 		{
-			startBattVoltageMeasure();
+			startVrefIntMeasure();
 		}
 		else if (radiationCounter.GetTime()->second == 40)
 		{
@@ -898,9 +902,15 @@ void readADCValue()
 	ADC_SoftwareStartConvCmd(ADC1, DISABLE);
 	uint16_t val = ADC_GetConversionValue(ADC1);
 	ADC_ClearFlag(ADC1, ADC_FLAG_EOC);
-	if (adcMode == BATTERY_VOLTAGE)
+	if (adcMode == VREFINT_VOLTAGE)
 	{
-		battVoltage = 2.09719 * (val * 3.2f) / 4096;	
+		ADC_TempSensorVrefintCmd(DISABLE);
+		VREFINT = val;
+		startBattVoltageMeasure();
+	}
+	else if (adcMode == BATTERY_VOLTAGE)
+	{
+		battVoltage = 2.09719 * (4095 * 1.20f / val);
 	}
 	else if (adcMode == TEMPERATURE)
 	{
@@ -912,11 +922,21 @@ void readADCValue()
 	ADC_Cmd(ADC1, DISABLE);
 }
 
+void startVrefIntMeasure()
+{
+	adcMode = VREFINT_VOLTAGE;
+	ADC_TempSensorVrefintCmd(ENABLE);
+	ADC_Cmd(ADC1, ENABLE);
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_Vrefint, 1, ADC_SampleTime_71Cycles5);
+	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);
+	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+}
+
 void startBattVoltageMeasure()
 {
 	adcMode = BATTERY_VOLTAGE;
 	ADC_Cmd(ADC1, ENABLE);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 1, ADC_SampleTime_1Cycles5);
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 1, ADC_SampleTime_71Cycles5);
 	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);
 	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 }
@@ -925,7 +945,7 @@ void startTemperatureMeasure()
 {
 	adcMode = TEMPERATURE;
 	ADC_Cmd(ADC1, ENABLE);
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_16, 1, ADC_SampleTime_41Cycles5);
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_TempSensor, 1, ADC_SampleTime_41Cycles5);
 	ADC_TempSensorVrefintCmd(ENABLE);
 	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);
 	ADC_SoftwareStartConvCmd(ADC1, ENABLE);

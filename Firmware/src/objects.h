@@ -52,7 +52,8 @@ typedef enum
 
 typedef enum
 { 
-	BATTERY_VOLTAGE = 0,
+	VREFINT_VOLTAGE = 0,
+	BATTERY_VOLTAGE = 1,
 	TEMPERATURE
 } ADC_MODE;
 
